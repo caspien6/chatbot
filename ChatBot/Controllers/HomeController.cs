@@ -5,13 +5,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using ChatBot.Models;
+using BLL.Context;
+using BLL.Models.Game;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatBot.Controllers
 {
     public class HomeController : Controller
     {
+        private StoryContext _context;
+
+        public HomeController(StoryContext context)
+        {
+            _context = context;
+        }
+
         public IActionResult Index()
         {
+           return Ok(_context.Users);
+            
+
             return View();
         }
 
