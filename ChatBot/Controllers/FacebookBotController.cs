@@ -23,7 +23,7 @@ namespace ChatBot.Controllers
         }
 
         [HttpGet]
-        public ActionResult Receive()
+        public async Task<ActionResult> Receive()
         {
             var query = Request.Query;
 
@@ -43,7 +43,7 @@ namespace ChatBot.Controllers
         
         [ActionName("Receive")]
         [HttpPost]
-        public ActionResult ReceivePost(BotRequest data)
+        public async Task<ActionResult> ReceivePost(BotRequest data)
         {
             
             try

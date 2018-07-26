@@ -42,8 +42,8 @@ namespace ChatBot
             //var connection = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=ChatStory;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
             services.AddDbContext<StoryContext>(options => options.UseSqlServer(Configuration.GetConnectionString("lackofmoney_AzureStorageConnectionString") ));
 
-            services.AddSingleton<IUserRepository, UserRepository > ();
-            services.AddScoped<RequestHandler, RequestHandler> ();
+            services.AddTransient<IUserRepository, UserRepository > ();
+            services.AddTransient<RequestHandler, RequestHandler> ();
 
             services.AddSwaggerGen(c =>
             {

@@ -2,6 +2,7 @@
 using BLL.Models.Game;
 using BLL.Repository;
 using ChatBot.Models.FacebookMessageHierarchy;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,16 +16,17 @@ namespace ChatBot.Handler
     {
         private IUserRepository _repository;
 
-        public RequestHandler(IUserRepository repo)
+        public RequestHandler()
         {
-            _repository = repo;
+           
         }
 
-        
         public void HandleRequest(BotRequest data)
         {
             Task.Factory.StartNew(() =>
             {
+                var fact = new StoryContextFactory();
+                _repository = new UserRepository(fact.CreateDbContext(new string[2]));
                 RequestData(data);
             });
         }
@@ -52,13 +54,35 @@ namespace ChatBot.Handler
                     if (u != null)
                     {
                         var msg = $"You said: {message.message.text} with this id: {u.Facebook_id}";
-                        var json = $@" {{recipient: {{  id: {message.sender.id}}},message: {{text: ""{msg}"" }}}}";
+                        var response = new BotMessageResponse
+                        {
+                            recipient = new BotUser
+                            {
+                                id = u.Facebook_id.ToString()
+                            },
+                            message = new MessageResponse
+                            {
+                                text = msg
+                            }
+                        };
+                        var json = JsonConvert.SerializeObject(response);
                         PostRaw("https://graph.facebook.com/v3.0/me/messages?access_token=EAADSmRksBeEBAOHMfZBAEHPLIo6UXugelborcpSJIaIxIfUIxd2fQzM6ADwwLOqWdJzlg8pUNZCWPB5ZAgomk1zdtmOil7L1hlOu1HLilOUrReg6ZCwQmhukZBqYN0YZBOWENQcZAw7RYRCpoC6EnjyYiLisEe9izvGhq7VdJtSuBHPaKaN3BnI", json);
                     }
                     else
                     {
                         var msg = $"You said: {message.message.text} with this id: {message.sender.id}";
-                        var json = $@" {{recipient: {{  id: {message.sender.id}}},message: {{text: ""{msg}"" }}}}";
+                        var response = new BotMessageResponse
+                        {
+                            recipient = new BotUser
+                            {
+                                id = message.sender.id
+                            },
+                            message = new MessageResponse
+                            {
+                                text = msg
+                            }
+                        };
+                        var json = JsonConvert.SerializeObject(response);
                         PostRaw("https://graph.facebook.com/v3.0/me/messages?access_token=EAADSmRksBeEBAOHMfZBAEHPLIo6UXugelborcpSJIaIxIfUIxd2fQzM6ADwwLOqWdJzlg8pUNZCWPB5ZAgomk1zdtmOil7L1hlOu1HLilOUrReg6ZCwQmhukZBqYN0YZBOWENQcZAw7RYRCpoC6EnjyYiLisEe9izvGhq7VdJtSuBHPaKaN3BnI", json);
                     }
                 }
