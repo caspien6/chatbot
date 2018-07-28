@@ -8,18 +8,18 @@ namespace FluentMachine.Configuration
 {
     public class Settings
     {
-        private readonly Engine _engine;
+        public int Id { get; set; }
 
-        private List<string> _states;
+        public int EngineId { get; set; }
+
+        public Engine Engine { get; set; }
+
+        public List<string> _states { get; set; }
 
         public string StartState { get; private set; }
 
         public string EndState { get; private set; }
 
-        public Settings(Engine engine)
-        {
-            _engine = engine;
-        }
 
         #region pass-through operations Map<T>, StartsWith, EndsWith, NeverEnding
 
@@ -28,7 +28,7 @@ namespace FluentMachine.Configuration
 
             _states = SqueezeAllConstStringFields<T>();
 
-            return _engine.Settings();
+            return Engine.Settings();
         }
 
         public Settings StartsWith(string state)
@@ -37,7 +37,7 @@ namespace FluentMachine.Configuration
 
             StartState = state;
 
-            return _engine.Settings();
+            return Engine.Settings();
         }
 
         public Settings EndsWith(string state)
@@ -46,14 +46,14 @@ namespace FluentMachine.Configuration
 
             EndState = state;
 
-            return _engine.Settings();
+            return Engine.Settings();
         }
 
         public Settings NeverEnding()
         {
             EndState = null;
 
-            return _engine.Settings();
+            return Engine.Settings();
         }
 
         #endregion

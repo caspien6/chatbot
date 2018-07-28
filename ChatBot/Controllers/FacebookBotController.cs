@@ -48,7 +48,7 @@ namespace ChatBot.Controllers
             
             try
             {
-                _handler.HandleRequest(data);
+                await _handler.HandleRequest(data);
             }
             catch (Exception e)
             {
@@ -58,8 +58,16 @@ namespace ChatBot.Controllers
 
             return Ok();
         }
-        
-        
+
+        [ActionName("DeleteUser")]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(UInt64 id)
+        {
+            _handler.DeleteUser(id);
+            return Ok();
+        }
+
+
 
     }
 }

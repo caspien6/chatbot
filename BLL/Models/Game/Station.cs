@@ -10,7 +10,7 @@ namespace BLL.Models.Game
 
         public string Story { get; set; }
 
-        public ICollection<Station> NextStations { get; set; }
+        public IDictionary<string,Station> NextStations { get; set; }
 
     }
 }

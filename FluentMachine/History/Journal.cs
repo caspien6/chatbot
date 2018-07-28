@@ -7,6 +7,7 @@ namespace FluentMachine.History
 {
     public class Journal : List<JournalItem>
     {
+        public int Id { get; set; }
 
         public void AddStateChange(string from, string to, bool hasSwitched, ICommand command)
         {

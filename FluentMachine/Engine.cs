@@ -8,11 +8,13 @@ namespace FluentMachine
 {
     public class Engine
     {
+        public int Id { get; set; }
+
         public Journal Journal = new Journal();
 
-        private Settings _settings;
+        public Settings Setting { get; set; }
 
-        private TransitionsSet _transitions;
+        public TransitionsSet _transitions { get; set; }
 
         public string CurrentState { set; get; }
 
@@ -20,14 +22,15 @@ namespace FluentMachine
 
         public Settings Map<T>() where T : struct
         {
-            _settings = new Settings(this);
-
-            return _settings.Map<T>();
+            Setting = new Settings();
+            Setting.Engine = this;
+            Setting.EngineId = this.Id;
+            return Setting.Map<T>();
         }
 
         public Settings Settings()
         {
-            return _settings;
+            return Setting;
         }
 
         #endregion
@@ -58,13 +61,13 @@ namespace FluentMachine
 
         public void PowerOn()
         {
-            CurrentState = _settings.StartState;
+            CurrentState = Setting.StartState;
         }
 
         public void Execute(ICommand command)
         {
 
-            if (CurrentState == _settings.EndState)
+            if (CurrentState == Setting.EndState)
             {
                 throw new ReachedEndStateException();
             };

@@ -10,6 +10,7 @@ namespace BLL.Repository
     {
         User FindUser(UInt64 id);
         User CreateUser(UInt64 fb_id, string name);
+        void DeleteUser(UInt64 id);
 
     }
 }
