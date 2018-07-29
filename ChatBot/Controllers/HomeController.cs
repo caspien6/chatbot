@@ -25,7 +25,7 @@ namespace ChatBot.Controllers
            return Ok(_context.Users);
             
 
-            return View();
+           // return View();
         }
 
         public IActionResult About()

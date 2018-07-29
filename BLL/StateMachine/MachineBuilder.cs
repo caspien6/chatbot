@@ -1,4 +1,5 @@
-﻿using Stateless;
+﻿using BLL.Repository.StoryRepository;
+using Stateless;
 using Stateless.Graph;
 using System;
 using System.Collections.Generic;
@@ -6,9 +7,23 @@ using System.Text;
 
 namespace BLL.StateMachine
 {
-    public class ChatStoryMenu
+    public class MainMenuStateMachine
     {
-        enum Trigger
+        public State _state = State.MainMenu;
+        StateMachine<State, Trigger> _machine;
+        StateMachine<State, Trigger>.TriggerWithParameters<string> _setNameTrigger;
+        private IStoryRepository _storyRepository;
+        string _name;
+
+        string _callee;
+
+        public MainMenuStateMachine(IStoryRepository repository)
+        {
+            PrepareMachine();
+            _storyRepository = repository;
+        }
+
+        public enum Trigger
         {
             Start,
             BackToMainMenu,
@@ -18,10 +33,9 @@ namespace BLL.StateMachine
             GiveName,
             GivePrimaryAttribute,
             StoryCommand
-
         }
 
-        enum State
+        public enum State
         {
             MainMenu,
             ListStory,
@@ -31,22 +45,14 @@ namespace BLL.StateMachine
             InStory
         }
 
-        State _state = State.MainMenu;
-
-        StateMachine<State, Trigger> _machine;
-        StateMachine<State, Trigger>.TriggerWithParameters<string> _setNameTrigger;
-
-        string _name;
-
-        string _callee;
-
-        public ChatStoryMenu()
+        private void PrepareMachine()
         {
             _machine = new StateMachine<State, Trigger>(() => _state, s => _state = s);
 
             _setNameTrigger = _machine.SetTriggerParameters<string>(Trigger.GiveName);
 
             _machine.Configure(State.MainMenu)
+                .Ignore(Trigger.BackToMainMenu)
                 .InternalTransition(Trigger.Info, t => Console.WriteLine())
                 .InternalTransition(Trigger.Start, t => Console.WriteLine())
                 .Permit(Trigger.Stories, State.ListStory);
@@ -67,7 +73,7 @@ namespace BLL.StateMachine
 
             _machine.Configure(State.InStory)
                 .Permit(Trigger.BackToMainMenu, State.MainMenu)
-                .InternalTransition(Trigger.StoryCommand, t => Console.WriteLine() );
+                .InternalTransition(Trigger.StoryCommand, t => Console.WriteLine());
 
             /*_machine.Configure(State.Ringing)
                 .OnEntryFrom(_setCalleeTrigger, callee => OnDialed(callee), "Caller number to call")
@@ -88,19 +94,26 @@ namespace BLL.StateMachine
                 .Permit(Trigger.PhoneHurledAgainstWall, State.PhoneDestroyed);*/
         }
 
-
         public void OnStart()
         {
             _machine.Fire(Trigger.Start);
         }
 
-        public void OnInfo()
+        public string OnInfo()
         {
             _machine.Fire(Trigger.Info);
+            return "Chatbot Beta version v0.4";
         }
-        public void OnStories()
+        public string OnStories()
         {
             _machine.Fire(Trigger.Stories);
+            var stories = _storyRepository.FindAllStory();
+            string response = "Here is all the story what you can play:\n";
+            foreach (var story in stories)
+            {
+                response += $"{story.Title}: \n {story.Description}\n";
+            }
+            return response;
         }
         public void OnChoosingStory()
         {
@@ -118,9 +131,10 @@ namespace BLL.StateMachine
         {
             _machine.Fire(Trigger.StoryCommand);
         }
-        public void OnBackToMainMenu()
+        public string OnBackToMainMenu()
         {
             _machine.Fire(Trigger.BackToMainMenu);
+            return "Welcome to the main menu!\nType info for version number";
         }
 
 

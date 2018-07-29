@@ -14,5 +14,6 @@ namespace BLL.Models.Game
 
         public ICollection<Story> Stories { get; set; }
 
+        public StateMachine.MainMenuStateMachine.State SavedState { get; set; }
     }
 }

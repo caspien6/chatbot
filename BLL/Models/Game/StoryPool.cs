@@ -4,13 +4,12 @@ using System.Text;
 
 namespace BLL.Models.Game
 {
-    public class Story
+    public class StoryPool
     {
         public int Id { get; set; }
         public string Title { get; set; }
-
-        public bool IsActive { get; set; }
-        public StoryProcedureState State { get; set; }
+        public string Description { get; set; }
+        public Station StarterStation { get; set; }
 
     }
 }

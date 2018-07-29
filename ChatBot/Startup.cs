@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using BLL.Context;
 using BLL.Repository;
+using BLL.Repository.StoryRepository;
+using BLL.StateMachine;
 using ChatBot.Handler;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -43,7 +45,11 @@ namespace ChatBot
             services.AddDbContext<StoryContext>(options => options.UseSqlServer(Configuration.GetConnectionString("lackofmoney_AzureStorageConnectionString") ));
 
             services.AddTransient<IUserRepository, UserRepository > ();
-            services.AddTransient<RequestHandler, RequestHandler> ();
+            services.AddTransient<IStoryRepository,StoryRepository > ();
+            services.AddScoped<RequestHandler, RequestHandler> ();
+            services.AddScoped<MainMenuStateMachine, MainMenuStateMachine>();
+            
+            //services.AddSingleton<IServiceScopeFactory>();
 
             services.AddSwaggerGen(c =>
             {

@@ -8,9 +8,11 @@ namespace BLL.Models.Game
     {
         public int Id { get; set; }
 
+        public string ConnectionCommand { get; set; }
+
         public string Story { get; set; }
 
-        public IDictionary<string,Station> NextStations { get; set; }
+        public ICollection<Station> NextStations { get; set; }
 
     }
 }

@@ -15,7 +15,7 @@ namespace BLL.Context
         }
 
 
-
+        public DbSet<StoryPool> StoryPools { get; set; }
         public DbSet<Character> Characters { get; set; }
         public DbSet<Item> Items { get; set; }
         public DbSet<Station> Stations { get; set; }

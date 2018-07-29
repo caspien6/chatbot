@@ -8,6 +8,7 @@ using ChatBot.Handler;
 using ChatBot.Models.FacebookMessageHierarchy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ChatBot.Controllers
 {
@@ -16,10 +17,12 @@ namespace ChatBot.Controllers
     public class FacebookBotController : ControllerBase
     {
         private RequestHandler _handler;
+        private ILogger logger;
 
-        public FacebookBotController(RequestHandler handler)
+        public FacebookBotController(RequestHandler handler, ILogger<FacebookBotController> logger)
         {
             _handler = handler;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -52,6 +55,8 @@ namespace ChatBot.Controllers
             }
             catch (Exception e)
             {
+                logger.LogError(e.Message);
+                logger.LogError(e.StackTrace);
                 return NotFound(e.Message);
             }
 
