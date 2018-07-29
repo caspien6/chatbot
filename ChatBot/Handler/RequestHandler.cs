@@ -4,6 +4,7 @@ using BLL.Repository;
 using BLL.StateMachine;
 using ChatBot.Models.FacebookMessageHierarchy;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace ChatBot.Handler
         private IUserRepository _repository;
         private IServiceScopeFactory _scopeFactory;
         private MainMenuStateMachine _stateMachine = null;
+        private ILogger _logger;
 
         public RequestHandler(IServiceScopeFactory scopeFactory)
         {
@@ -45,6 +47,7 @@ namespace ChatBot.Handler
                 {
                     _repository = scope.ServiceProvider.GetService<IUserRepository>();
                     _stateMachine = scope.ServiceProvider.GetService<MainMenuStateMachine>();
+                    _logger = scope.ServiceProvider.GetService<ILogger<RequestHandler>>();
                     RequestData(data);
                 }
             });
@@ -52,10 +55,13 @@ namespace ChatBot.Handler
 
         private void RequestData(BotRequest data)
         {
+            _logger.LogInformation("Begin data processing");
             foreach (var entry in data.entry)
             {
+                _logger.LogInformation("Entry");
                 foreach (var message in entry.messaging)
                 {
+                    _logger.LogInformation("Message");
                     if (string.IsNullOrWhiteSpace(message?.message?.text))
                         continue;
                     
