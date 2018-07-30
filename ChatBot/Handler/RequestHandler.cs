@@ -1,8 +1,8 @@
 ﻿using BLL.Context;
+using BLL.FacebookMessageHierarchy;
 using BLL.Models.Game;
 using BLL.Repository;
 using BLL.StateMachine;
-using ChatBot.Models.FacebookMessageHierarchy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -75,26 +75,26 @@ namespace ChatBot.Handler
                     }
                     _stateMachine._state = u.SavedState;
 
-                    var msg = GetResponseMessage(message.message.text, u);
+                    var msg = GetResponseMessage(message, u);
                     u.SavedState = _stateMachine._state;
                     _repository.UpdateUser(u);
 
-                    if (u != null)
+                    /*if (u != null)
                     {
                         PrepareMessage(msg, u.Facebook_id.ToString());
                     }
                     else
                     {
                         PrepareMessage(msg, message.sender.id);
-                    }
+                    }*/
                     
                 }
             }
         }
 
-        private string GetResponseMessage(string message, User user)
+        private string GetResponseMessage(BotMessageReceivedRequest message, User user)
         {
-            switch (message.ToLower().Trim())
+            switch (message.message.text.ToLower().Trim())
             {
                 case Constants.INFO:
                     if (user.SavedState == MainMenuStateMachine.State.MainMenu)
@@ -108,7 +108,9 @@ namespace ChatBot.Handler
                 case Constants.LIST_STORIES:
                     if (user.SavedState == MainMenuStateMachine.State.MainMenu)
                     {
-                        return _stateMachine.OnStories();
+                        var responseData = _stateMachine.OnStories();
+                        PrepareMessageWithQuickReply(responseData.text, responseData.quick_replies, user.Facebook_id.ToString());
+                        return "";
                     }
                     else
                     {
@@ -117,9 +119,46 @@ namespace ChatBot.Handler
                 case Constants.BACK_TO_MAIN_MENU:
                     return _stateMachine.OnBackToMainMenu();
                 default:
-                    break;
+                    return DecideStoryCommand(message, user);
+            }
+        }
+
+        private string DecideStoryCommand(BotMessageReceivedRequest message, User user)
+        {
+            if (user.SavedState == MainMenuStateMachine.State.ListStory)
+            {
+                int index;
+                if ( Int32.TryParse(message.message.text, out index) )
+                {
+                    return _stateMachine.OnChoosingStory(user, index).text;
+                }
+                else
+                {
+                    return "Létező id-t adj meg! (1-...)";
+                }
             }
             return "";
+
+        }
+
+        private void PrepareMessageWithQuickReply(string message,List<QuickReply> quickReplies ,string facebook_id)
+        {
+            var msg = $"{message}\n id ({facebook_id})";
+            var response = new BotMessageResponse
+            {
+                recipient = new BotUser
+                {
+                    id = facebook_id
+                },
+                message = new MessageResponse
+                {
+                    text = msg,
+                    quick_replies = quickReplies
+                },
+            };
+            var json = JsonConvert.SerializeObject(response);
+            PostRaw("https://graph.facebook.com/v3.0/me/messages?access_token=EAADSmRksBeEBAOHMfZBAEHPLIo6UXugelborcpSJIaIxIfUIxd2fQzM6ADwwLOqWdJzlg8pUNZCWPB5ZAgomk1zdtmOil7L1hlOu1HLilOUrReg6ZCwQmhukZBqYN0YZBOWENQcZAw7RYRCpoC6EnjyYiLisEe9izvGhq7VdJtSuBHPaKaN3BnI", json);
+
         }
 
         private void PrepareMessage(string message, string facebook_id)

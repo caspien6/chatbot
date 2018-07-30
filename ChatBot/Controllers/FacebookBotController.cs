@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using BLL.FacebookMessageHierarchy;
 using ChatBot.Handler;
-using ChatBot.Models.FacebookMessageHierarchy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -66,7 +66,7 @@ namespace ChatBot.Controllers
 
         [ActionName("DeleteUser")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(UInt64 id)
+        public ActionResult Delete(UInt64 id)
         {
             _handler.DeleteUser(id);
             return Ok();

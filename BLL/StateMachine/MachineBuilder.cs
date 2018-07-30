@@ -1,8 +1,11 @@
-﻿using BLL.Repository.StoryRepository;
+﻿using BLL.FacebookMessageHierarchy;
+using BLL.Models.Game;
+using BLL.Repository.StoryRepository;
 using Stateless;
 using Stateless.Graph;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace BLL.StateMachine
@@ -104,21 +107,29 @@ namespace BLL.StateMachine
             _machine.Fire(Trigger.Info);
             return "Chatbot Beta version v0.4";
         }
-        public string OnStories()
+        public ResponseDataModel OnStories()
         {
             _machine.Fire(Trigger.Stories);
             var stories = _storyRepository.FindAllStory();
             string response = "Here is all the story what you can play:\n";
-            foreach (var story in stories)
+            var quickReply = new List<QuickReply>();
+
+            for (int i = 0; i < stories.Count; i++)
             {
-                response += $"{story.Title}: \n {story.Description}\n";
+                response += $"{stories.ElementAt(i).Title}: \n {stories.ElementAt(i).Description}\n";
+                quickReply.Add(new QuickReply {title = (i+1).ToString(), content_type = "text", payload = "RED" });
             }
-            return response;
+            return new ResponseDataModel { text = response , quick_replies = quickReply};
         }
-        public void OnChoosingStory()
+
+        public ResponseDataModel OnChoosingStory(User u, int index)
         {
             _machine.Fire(Trigger.ChooseStory);
+            _storyRepository.CreateChosenStory(u, index-1);
+            var storymsg =  "A story kiválasztva, válassz a karakterednek nevet. Ezt később nem változtathatod meg úgyhogy úgy válassz.";
+            return new ResponseDataModel { text = storymsg };
         }
+
         public void OnGivingName()
         {
             _machine.Fire(Trigger.GiveName);
