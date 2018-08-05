@@ -1,5 +1,6 @@
 ﻿using BLL.FacebookMessageHierarchy;
 using BLL.Models.Game;
+using BLL.Repository;
 using BLL.Repository.StoryRepository;
 using Stateless;
 using Stateless.Graph;
@@ -16,14 +17,16 @@ namespace BLL.StateMachine
         StateMachine<State, Trigger> _machine;
         StateMachine<State, Trigger>.TriggerWithParameters<string> _setNameTrigger;
         private IStoryRepository _storyRepository;
+        private IUserRepository _userRepository;
         string _name;
 
         string _callee;
 
-        public MainMenuStateMachine(IStoryRepository repository)
+        public MainMenuStateMachine(IStoryRepository repository, IUserRepository userRepository)
         {
             PrepareMachine();
             _storyRepository = repository;
+            _userRepository = userRepository;
         }
 
         public enum Trigger
@@ -33,6 +36,7 @@ namespace BLL.StateMachine
             Info,
             Stories,
             ChooseStory,
+            //ContinueStory,
             GiveName,
             GivePrimaryAttribute,
             StoryCommand
@@ -52,7 +56,7 @@ namespace BLL.StateMachine
         {
             _machine = new StateMachine<State, Trigger>(() => _state, s => _state = s);
 
-            _setNameTrigger = _machine.SetTriggerParameters<string>(Trigger.GiveName);
+            //_setNameTrigger = _machine.SetTriggerParameters<string>(Trigger.GiveName);
 
             _machine.Configure(State.MainMenu)
                 .Ignore(Trigger.BackToMainMenu)
@@ -63,15 +67,14 @@ namespace BLL.StateMachine
             _machine.Configure(State.ListStory)
                 .Permit(Trigger.ChooseStory, State.ChooseName)
                 .Permit(Trigger.BackToMainMenu, State.MainMenu);
-
-            _machine.Configure(State.CharacterCreation)
-                .Permit(Trigger.BackToMainMenu, State.MainMenu);
+                
 
             _machine.Configure(State.ChooseName)
-                .SubstateOf(State.CharacterCreation)
+                .Permit(Trigger.BackToMainMenu, State.MainMenu)
                 .Permit(Trigger.GiveName, State.ChoosePrimaryAttribute);
+
             _machine.Configure(State.ChoosePrimaryAttribute)
-                .SubstateOf(State.CharacterCreation)
+                .Permit(Trigger.BackToMainMenu, State.MainMenu)
                 .Permit(Trigger.GivePrimaryAttribute, State.InStory);
 
             _machine.Configure(State.InStory)
@@ -102,10 +105,13 @@ namespace BLL.StateMachine
             _machine.Fire(Trigger.Start);
         }
 
-        public string OnInfo()
+        public ResponseDataModel OnInfo()
         {
             _machine.Fire(Trigger.Info);
-            return "Chatbot Beta version v0.4";
+            return new ResponseDataModel { text = "Chatbot Beta version v0.4", quick_replies = new List<QuickReply> {
+                new QuickReply{content_type = "text" , title =  "stories", payload = "RED"},
+                new QuickReply{content_type = "text" , title =  "info", payload = "RED"},
+            } };
         }
         public ResponseDataModel OnStories()
         {
@@ -126,26 +132,62 @@ namespace BLL.StateMachine
         {
             _machine.Fire(Trigger.ChooseStory);
             _storyRepository.CreateChosenStory(u, index-1);
-            var storymsg =  "A story kiválasztva, válassz a karakterednek nevet. Ezt később nem változtathatod meg úgyhogy úgy válassz.";
-            return new ResponseDataModel { text = storymsg };
+            var storymsg =  "A story kiválasztva, válassz a karakterednek nevet. Ezt később nem változtathatod meg úgy válassz.";
+            return new ResponseDataModel
+            {
+                text = storymsg,
+                quick_replies = new List<QuickReply> {
+                    new QuickReply{content_type = "text" , title =  "backtomenu", payload = "RED"},
+                    new QuickReply{content_type = "text" , title =  "info", payload = "RED"},
+                }
+            };
         }
 
-        public void OnGivingName()
+        public ResponseDataModel OnGivingName(User u, string name )
         {
             _machine.Fire(Trigger.GiveName);
+            //_storyRepository.SetName(u, name);
+            var storymsg = $"A név kiválasztva, {name}\nMost pedig elsődleges attribútumot kell választanod:\n 1. Strength\n 2. Agility\n 3. Intelligence";
+            return new ResponseDataModel
+            {
+                text = storymsg,
+                quick_replies = new List<QuickReply> {
+                    new QuickReply{content_type = "text" , title =  "1", payload = "RED"},
+                    new QuickReply{content_type = "text" , title =  "2", payload = "GREEN"},
+                    new QuickReply{content_type = "text" , title =  "3", payload = "BLUE"},
+                    new QuickReply{content_type = "text" , title =  "backtomenu", payload = "RED"},
+                }
+            };
         }
-        public void OnOnGivingPrimaryAttribute()
+        public ResponseDataModel OnGivingPrimaryAttribute(User u, AttributeType attributeType)
         {
             _machine.Fire(Trigger.GivePrimaryAttribute);
+            _storyRepository.SetPrimaryAttribute(u, attributeType);
+            var storymsg = $"A kiválasztott attribútumod, {attributeType.ToString()}";
+            return new ResponseDataModel
+            {
+                text = storymsg,
+                quick_replies = new List<QuickReply> {
+                    new QuickReply{content_type = "text" , title =  "backtomenu", payload = "RED"},
+                }
+            };
         }
         public void OnStoryCommand()
         {
             _machine.Fire(Trigger.StoryCommand);
         }
-        public string OnBackToMainMenu()
+        public ResponseDataModel OnBackToMainMenu()
         {
             _machine.Fire(Trigger.BackToMainMenu);
-            return "Welcome to the main menu!\nType info for version number";
+           var msg =  "Welcome to the main menu!\nType info for version number";
+            return new ResponseDataModel
+            {
+                text = msg,
+                quick_replies = new List<QuickReply> {
+                    new QuickReply{content_type = "text" , title =  "stories", payload = "RED"},
+                    new QuickReply{content_type = "text" , title =  "info",  payload = "RED"},
+                }
+            };
         }
 
 

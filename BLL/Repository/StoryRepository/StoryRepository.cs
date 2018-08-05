@@ -1,5 +1,6 @@
 ﻿using BLL.Context;
 using BLL.Models.Game;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,13 @@ using System.Text;
 
 namespace BLL.Repository.StoryRepository
 {
+    public enum AttributeType
+    {
+        Strength,
+        Agility,
+        Intelligence
+    }
+
     public class StoryRepository : IStoryRepository
     {
         private StoryContext _context;
@@ -49,6 +57,57 @@ namespace BLL.Repository.StoryRepository
 
         }
 
+        public void SetName(User us, string name)
+        {
+            var story = PickSelectedStory(us);
+            story.State.Character.Name = name;
+            _context.Update(story);
+            _context.SaveChanges();
+
+        }
         
+
+        public void SetPrimaryAttribute(User us, AttributeType attribType)
+        {
+            var story = PickSelectedStory(us);
+            switch (attribType)
+            {
+                case AttributeType.Strength:
+                    story.State.Character.Health *= 4;
+                    break;
+                case AttributeType.Agility:
+                    story.State.Character.Health *= 4;
+                    story.State.Character.Mana *= 2;
+                    break;
+                case AttributeType.Intelligence:
+                    story.State.Character.Mana *= 4;
+                    break;
+                default:
+                    throw new ApplicationException("Error while choosing primary attribute!");
+            }
+
+            _context.Update(story);
+            _context.SaveChanges();
+
+        }
+
+
+        private Story PickSelectedStory(User us)
+        {
+            var user = (from s in _context.Users
+                        .Include(u => u.Stories)
+                        where s.Facebook_id == us.Facebook_id
+                        select s).FirstOrDefault();
+
+            var queryStoryId = us.Stories.Where(s => s.IsActive).Select(s => s.Id).FirstOrDefault();
+
+            var selectedStory = (from s in _context.Stories
+                                .Include(s => s.State)
+                                .ThenInclude(sp => sp.Character)
+                                 where s.Id == queryStoryId
+                                 select s).FirstOrDefault();
+            return selectedStory;
+        }
+
     }
 }

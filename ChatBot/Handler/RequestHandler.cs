@@ -2,6 +2,7 @@
 using BLL.FacebookMessageHierarchy;
 using BLL.Models.Game;
 using BLL.Repository;
+using BLL.Repository.StoryRepository;
 using BLL.StateMachine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -75,10 +76,10 @@ namespace ChatBot.Handler
                     }
                     _stateMachine._state = u.SavedState;
 
-                    var msg = GetResponseMessage(message, u);
+                    GetResponseMessage(message, u);
                     u.SavedState = _stateMachine._state;
                     _repository.UpdateUser(u);
-
+                    //Todo mindegyiknél prepare message et kikötni!
                     /*if (u != null)
                     {
                         PrepareMessage(msg, u.Facebook_id.ToString());
@@ -92,52 +93,74 @@ namespace ChatBot.Handler
             }
         }
 
-        private string GetResponseMessage(BotMessageReceivedRequest message, User user)
+        private void GetResponseMessage(BotMessageReceivedRequest message, User user)
         {
+            ResponseDataModel msg;
             switch (message.message.text.ToLower().Trim())
             {
                 case Constants.INFO:
                     if (user.SavedState == MainMenuStateMachine.State.MainMenu)
                     {
-                        return _stateMachine.OnInfo();
+                        msg =  _stateMachine.OnInfo();
                     }
                     else
                     {
-                        return "you are not in the correct state for this command";
+                        msg = Constants.DEFAULT_ERROR;
                     }
+                    break;
                 case Constants.LIST_STORIES:
                     if (user.SavedState == MainMenuStateMachine.State.MainMenu)
                     {
-                        var responseData = _stateMachine.OnStories();
-                        PrepareMessageWithQuickReply(responseData.text, responseData.quick_replies, user.Facebook_id.ToString());
-                        return "";
+                        msg = _stateMachine.OnStories();
                     }
                     else
                     {
-                        return "you are not in the correct state for this command";
+                       msg = Constants.DEFAULT_ERROR;
                     }
+                    break;
                 case Constants.BACK_TO_MAIN_MENU:
-                    return _stateMachine.OnBackToMainMenu();
+                    msg =  _stateMachine.OnBackToMainMenu();
+                    break;
                 default:
-                    return DecideStoryCommand(message, user);
+                    msg =  DecideStoryCommand(message, user);
+                    break;
             }
+            //PrepareMessage(msg.text, user.Facebook_id.ToString());
+            PrepareMessageWithQuickReply(msg.text, msg.quick_replies, user.Facebook_id.ToString());
         }
 
-        private string DecideStoryCommand(BotMessageReceivedRequest message, User user)
+        private ResponseDataModel DecideStoryCommand(BotMessageReceivedRequest message, User user)
         {
             if (user.SavedState == MainMenuStateMachine.State.ListStory)
             {
                 int index;
-                if ( Int32.TryParse(message.message.text, out index) )
+                if (Int32.TryParse(message.message.text, out index))
                 {
-                    return _stateMachine.OnChoosingStory(user, index).text;
+                    return _stateMachine.OnChoosingStory(user, index);
                 }
                 else
                 {
-                    return "Létező id-t adj meg! (1-...)";
+                    return Constants.NOT_AVAILABLE_ERROR;
                 }
             }
-            return "";
+            else if (user.SavedState == MainMenuStateMachine.State.ChooseName)
+            {
+                return _stateMachine.OnGivingName(user, message.message.text);
+            }
+            else if (user.SavedState == MainMenuStateMachine.State.ChoosePrimaryAttribute)
+            {
+                int attribute;
+                if (Int32.TryParse(message.message.text, out attribute))
+                {
+                    
+                    return _stateMachine.OnGivingPrimaryAttribute(user, (AttributeType) attribute - 1);
+                }
+                else
+                {
+                    return Constants.NOT_AVAILABLE_ERROR;
+                }
+            }
+            return Constants.NOT_AVAILABLE_ERROR;
 
         }
 

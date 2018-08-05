@@ -9,6 +9,8 @@ namespace BLL.Repository.StoryRepository
     {
         ICollection<StoryPool> FindAllStory();
         Story CreateChosenStory(User _user, int index);
+        void SetName(User us, string name);
+        void SetPrimaryAttribute(User us, AttributeType attribType);
 
     }
 }
